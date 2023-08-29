@@ -49,7 +49,11 @@ import com.lexmerciful.to_dolist.presentation.sign_up.SignInWithOAuthButton
 import com.lexmerciful.to_dolist.presentation.sign_up.TextFieldEntries
 
 @Composable
-fun SignInScreen(navController: NavController) {
+fun SignInScreen(
+    navController: NavController,
+    state: SignInState,
+    onSignInClick: (email: String, password: String) -> Unit
+) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -85,6 +89,7 @@ fun SignInScreen(navController: NavController) {
 
             SignInButton {
                 navController.popBackStack()
+                onSignInClick(email, password)
                 navController.navigate(Screen.Home.route)
             }
 
@@ -263,7 +268,7 @@ fun ForgotPasswordText() {
 @Preview(showBackground = true)
 @Composable
 fun PreviewSignInScreen() {
-    SignInScreen(rememberNavController())
+    SignInScreen(rememberNavController(), SignInState(), {_,_ -> })
 }
 
 

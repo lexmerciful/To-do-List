@@ -2,6 +2,7 @@ package com.lexmerciful.to_dolist.di
 
 import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.lexmerciful.to_dolist.data.AuthRepository
 import com.lexmerciful.to_dolist.data.AuthRepositoryImpl
 import com.lexmerciful.to_dolist.data.DataStoreRepository
@@ -28,10 +29,15 @@ object MainModule {
 
     @Provides
     @Singleton
+    fun providesFirebaseFirestore() = FirebaseFirestore.getInstance()
+
+    @Provides
+    @Singleton
     fun provideAuthRepository(
-        auth: FirebaseAuth
+        auth: FirebaseAuth,
+        firebaseFirestore: FirebaseFirestore
     ): AuthRepository {
-        return AuthRepositoryImpl(auth)
+        return AuthRepositoryImpl(auth, firebaseFirestore)
     }
 
 }

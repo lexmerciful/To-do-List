@@ -34,4 +34,7 @@ class SignInViewModel @Inject constructor(
         }
     }
 
+    fun signOut() = viewModelScope.launch {
+        authRepository.signOut()
+    }
 }

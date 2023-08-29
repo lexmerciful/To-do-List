@@ -10,4 +10,8 @@ interface AuthRepository {
 
     fun registerUser(email: String, password: String): Flow<Resource<AuthResult>>
 
+    suspend fun saveUserToFirestore(user: User): Resource<Unit>
+
+    fun signOut()
+
 }

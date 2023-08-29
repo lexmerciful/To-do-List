@@ -9,6 +9,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.lexmerciful.to_dolist.presentation.onboarding.OnboardScreen
 import com.lexmerciful.to_dolist.presentation.sign_in.SignInScreen
+import com.lexmerciful.to_dolist.presentation.sign_in.SignInState
+import com.lexmerciful.to_dolist.presentation.sign_in.SignInViewModel
 import com.lexmerciful.to_dolist.presentation.sign_up.SignUpScreen
 import com.lexmerciful.to_dolist.presentation.sign_up.SignUpState
 import com.lexmerciful.to_dolist.presentation.sign_up.SignUpViewModel
@@ -20,7 +22,7 @@ fun SetupNavGraph(
 ) {
 
     val signUpViewModel = hiltViewModel<SignUpViewModel>()
-    val state by signUpViewModel.signUpState.collectAsStateWithLifecycle(initialValue = SignUpState())
+    val signInViewModel = hiltViewModel<SignInViewModel>()
 
     NavHost(
         navController = navController,
@@ -31,11 +33,15 @@ fun SetupNavGraph(
         }
 
         composable(Screen.SignUp.route) {
+            val state by signUpViewModel.signUpState.collectAsStateWithLifecycle(initialValue = SignUpState())
+
             SignUpScreen(navController = navController, state = state, onSignUpClick = signUpViewModel::registerUser )
         }
 
         composable(Screen.SignIn.route) {
-            SignInScreen(navController = navController)
+            val state by signInViewModel.signInState.collectAsStateWithLifecycle(initialValue = SignInState())
+
+            SignInScreen(navController = navController, state = state, signInViewModel::loginUser)
         }
     }
 }

@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.lexmerciful.to_dolist.R
+import com.lexmerciful.to_dolist.data.User
 import com.lexmerciful.to_dolist.navigation.Screen
 import com.lexmerciful.to_dolist.ui.theme.PrimaryColor
 import com.lexmerciful.to_dolist.ui.theme.TextFieldBgColor
@@ -78,6 +79,13 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    val validation = validateSignUpFields(email, password, confirmPassword)
+
+    // State variables for tracking validation errors
+    var emailValidationError by remember { mutableStateOf<String?>(null) }
+    var passwordValidationError by remember { mutableStateOf<String?>(null) }
+    var confirmPasswordValidationError by remember { mutableStateOf<String?>(null) }
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -116,17 +124,24 @@ fun SignUpScreen(
         ) {
             SignUpTop()
 
-            TextFieldEntries(email, stringResource(R.string.email), painterResource(id = R.drawable.email_icon), false) {
+            TextFieldEntries(
+                textValue = email,
+                labelValue = stringResource(R.string.email),
+                leadIcon = painterResource(id = R.drawable.email_icon),
+                password = false,
+                validationError = emailValidationError
+            ) {
                 email = it
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             TextFieldEntries(
-                password,
-                stringResource(R.string.password),
-                painterResource(id = R.drawable.password_icon),
-                true
+                textValue = password,
+                labelValue = stringResource(R.string.password),
+                leadIcon = painterResource(id = R.drawable.password_icon),
+                password = true,
+                validationError = passwordValidationError
             ) {
                 password = it
             }
@@ -134,10 +149,11 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             TextFieldEntries(
-                confirmPassword,
-                stringResource(R.string.confirm_password),
-                painterResource(id = R.drawable.password_icon),
-                true
+                textValue = confirmPassword,
+                labelValue = stringResource(R.string.confirm_password),
+                leadIcon = painterResource(id = R.drawable.password_icon),
+                password = true,
+                validationError = confirmPasswordValidationError
             ) {
                 confirmPassword = it
             }
@@ -145,7 +161,16 @@ fun SignUpScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             SignUpButton(state = state) {
-                onSignUpClick(email, password)
+                // Validation errors check
+                emailValidationError = if (!validation.isEmailValid) "Invalid email format" else null
+                passwordValidationError = if (!validation.isPasswordValid) "Password must be at least 6 characters!" else null
+                confirmPasswordValidationError = if (!validation.isConfirmPasswordValid) "Passwords do not match" else null
+
+                if (validation.isEmailValid && validation.isPasswordValid && validation.isConfirmPasswordValid){
+                    onSignUpClick(email, password)
+                } else {
+                    // Handle validation errors here
+                }
             }
 
             //Spacer(modifier = Modifier.height(100.dp))
@@ -278,68 +303,99 @@ fun TextFieldEntries(
     labelValue: String,
     leadIcon: Painter,
     password: Boolean,
+    validationError: String? = null,
     onValueChange: (String) -> Unit
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     var isTextFieldFocused by remember { mutableStateOf(false) }
 
-    OutlinedTextField(
-        value = textValue,
-        onValueChange = {text ->
-            onValueChange(text)
-        },
-        label = {Text(text = labelValue, color = if (isTextFieldFocused || textValue.isNotEmpty()) {
-            Color.Transparent // Make the label color transparent when focused
-        } else {
-            Color.LightGray
-        })},
-        modifier = Modifier
-            .padding(start = 8.dp, end = 8.dp)
-            .fillMaxWidth()
-            .onFocusChanged { isFocused ->
-                isTextFieldFocused = isFocused.isFocused
+    Column() {
+
+        OutlinedTextField(
+            value = textValue,
+            onValueChange = {text ->
+                onValueChange(text)
             },
-        shape = RoundedCornerShape(20),
-        singleLine = true,
-        textStyle = TextStyle(
-            color = MaterialTheme.colorScheme.surface,
-            fontSize = 18.sp,
-            fontFamily = FontFamily(Font(R.font.poppins_regular))
-        ),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            focusedBorderColor = if (isSystemInDarkTheme()) {
-                TextFieldBgColorDarkTheme
-            } else { TextFieldBgColor },
-            focusedLabelColor = Color.Transparent,
-            cursorColor = PrimaryColor,
-            errorBorderColor = Color.Red,
-            backgroundColor = if (isSystemInDarkTheme()) {
-                TextFieldBgColorDarkTheme
-            } else { TextFieldBgColor },
-            unfocusedLabelColor = if (isSystemInDarkTheme()) {
-                Color.White
-            } else { TextFieldLabelColor },
-            unfocusedBorderColor = if (isSystemInDarkTheme()) {
-                TextFieldBgColorDarkTheme
-            } else { TextFieldBgColor }
-        ),
-        visualTransformation = if (!password) VisualTransformation.None else PasswordVisualTransformation(),
-        leadingIcon = {
-            Icon(
-                painter = leadIcon,
-                contentDescription = labelValue,
-                tint = Color.Gray
+            label = { Text(text = if (isTextFieldFocused || textValue.isNotEmpty()){
+                ""
+            } else { labelValue }, color = if (isTextFieldFocused || textValue.isNotEmpty()) {
+                Color.Transparent // Make the label color transparent when focused
+            } else {
+                Color.LightGray
+            })},
+            modifier = Modifier
+                .padding(start = 8.dp, end = 8.dp)
+                .fillMaxWidth()
+                .onFocusChanged { isFocused ->
+                    isTextFieldFocused = isFocused.isFocused
+                },
+            shape = RoundedCornerShape(20),
+            singleLine = true,
+            textStyle = TextStyle(
+                color = MaterialTheme.colorScheme.surface,
+                fontSize = 18.sp,
+                fontFamily = FontFamily(Font(R.font.poppins_regular))
+            ),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = if (isSystemInDarkTheme()) {
+                    TextFieldBgColorDarkTheme
+                } else { TextFieldBgColor },
+                focusedLabelColor = Color.Transparent,
+                cursorColor = PrimaryColor,
+                errorBorderColor = Color.Red,
+                backgroundColor = if (isSystemInDarkTheme()) {
+                    TextFieldBgColorDarkTheme
+                } else { TextFieldBgColor },
+                unfocusedLabelColor = if (isSystemInDarkTheme()) {
+                    Color.White
+                } else { TextFieldLabelColor },
+                unfocusedBorderColor = if (isSystemInDarkTheme()) {
+                    TextFieldBgColorDarkTheme
+                } else { TextFieldBgColor }
+            ),
+            visualTransformation = if (!password) VisualTransformation.None else PasswordVisualTransformation(),
+            leadingIcon = {
+                Icon(
+                    painter = leadIcon,
+                    contentDescription = labelValue,
+                    tint = Color.Gray
+                )
+            },
+            keyboardOptions = if (password) {
+                KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = if (labelValue != stringResource(id = R.string.confirm_password)){
+                        ImeAction.Next
+                    } else { ImeAction.Done }
+                )
+            } else KeyboardOptions(imeAction = ImeAction.Next),
+            isError = validationError != null,
+            trailingIcon = {
+                if (validationError != null) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.error_warning),
+                        contentDescription = "Error Icon",
+                        tint = Color.Red
+                    )
+                }
+            }
+        )
+
+        if (validationError != null) {
+            Text(
+                text = validationError,
+                color = Color.Red,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.padding(start = 16.dp).align(Alignment.Start),
+                style = TextStyle(
+                    color = Color.Red,
+                    fontSize = 12.sp
+                )
             )
-        },
-        keyboardOptions = if (password) {
-            KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = if (labelValue != stringResource(id = R.string.confirm_password)){
-                    ImeAction.Next
-                } else { ImeAction.Done }
-            )
-        } else KeyboardOptions(imeAction = ImeAction.Next)
-    )
+        }
+
+    }
+
 }
 
 @Composable
